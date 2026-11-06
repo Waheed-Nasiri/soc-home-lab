@@ -51,7 +51,7 @@ demandé par l'attaquant car plus facile à casser que l'AES) :
 ```
 $krb5tgs$23$*dbancal$ESDOWN.LOCAL$HTTP/webserver.esdown.local*...
 ```
-![alt text](image-2.png)
+
 ### 3.2 Cassage hors-ligne
 
 ```bash
@@ -61,7 +61,7 @@ john --wordlist=/usr/share/wordlists/rockyou.txt hash_dbancal.txt
 Le mot de passe faible du compte de service est retrouvé en quelques secondes :
 `dbancal : start`.
 
-![alt text](image-3.png)
+
 
 ### 3.3 Réutilisation des identifiants compromis
 
@@ -74,7 +74,7 @@ crackmapexec smb 192.168.x.x -u 'dbancal' -p 'start'
 > d'échec d'authentification.
 
 ---
-![alt text](image-4.png)
+
 
 ## 4. Détection (côté défensif)
 
@@ -93,7 +93,7 @@ Le point d'analyse central : une demande 4769 en **RC4 (0x17)** pour un compte �
 suspecte par nature. Les demandes légitimes modernes utilisent l'AES (`0x12`). L'attaquant force
 le RC4 parce qu'il se casse plus facilement hors-ligne.
 
-![alt text](image-5.png)
+
 
 ### 4.2 Règle de détection (SPL)
 
@@ -102,7 +102,7 @@ index=windows EventCode=4769 Type_de_chiffrement_du_ticket=0x17 Nom_du_service!=
 | table _time, Nom_du_compte, Nom_du_service, Adresse_du_client, Type_de_chiffrement_du_ticket
 | sort - _time
 ```
-![alt text](image-6.png)
+
 **Logique de la règle :**
 - `Type_de_chiffrement_du_ticket=0x17` → ne garde que le RC4 (le marqueur d'attaque).
 - `Nom_du_service!="*$"` → exclut les comptes machines (terminant par `$`), source de faux
@@ -145,7 +145,7 @@ tags:
 ```
 
 ---
-![alt text](image-7.png)
+
 ## 6. Recommandations de remédiation
 
 - **Forcer l'AES** au lieu du RC4 sur les comptes à SPN (attribut *msDS-SupportedEncryptionTypes*).
