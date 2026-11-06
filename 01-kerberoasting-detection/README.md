@@ -24,9 +24,9 @@ MITRE ATT&CK, tuning (réduction des faux positifs).
 
 | Machine | Rôle | IP (réseau interne `labnet`) |
 |---------|------|------------------------------|
-| `WIN-DC` | Contrôleur de domaine Active Directory (`esdown.local`) | 192.168.x.x |
-| `SPLUNK` | SIEM Splunk Enterprise (Ubuntu Server) | 192.168.x.x |
-| `KALI` | Machine attaquante (Impacket, John the Ripper) | 192.168.x.x |
+| `WIN-DC` | Contrôleur de domaine Active Directory (`esdown.local`) | 192.168.56.10 |
+| `SPLUNK` | SIEM Splunk Enterprise (Ubuntu Server) | 192.168.56.30 |
+| `KALI` | Machine attaquante (Impacket, John the Ripper) | 192.168.56.40 |
 
 Collecte des logs : **Splunk Universal Forwarder** installé sur le DC, remontant les journaux
 **Security** et **Sysmon** vers un index dédié `windows`. Audit Kerberos activé sur le DC
@@ -42,7 +42,7 @@ Depuis Kali, avec un simple compte de domaine, extraction du TGS du compte de se
 (compte doté d'un SPN `HTTP/webserver.esdown.local`) :
 
 ```bash
-impacket-GetUserSPNs esdown.local/<user>:'<password>' -dc-ip 192.168.x.x -request-user dbancal -outputfile hash_dbancal.txt
+impacket-GetUserSPNs esdown.local/<user>:'<password>' -dc-ip 192.168.56.10 -request-user dbancal -outputfile hash_dbancal.txt
 ```
 
 Résultat — un hash TGS au format `$krb5tgs$23$` (le **23** = chiffrement **RC4**, volontairement
@@ -51,6 +51,8 @@ demandé par l'attaquant car plus facile à casser que l'AES) :
 ```
 $krb5tgs$23$*dbancal$ESDOWN.LOCAL$HTTP/webserver.esdown.local*...
 ```
+
+![Extraction du ticket TGS depuis Kali avec Impacket](john-soc.png)
 
 ### 3.2 Cassage hors-ligne
 
@@ -61,12 +63,12 @@ john --wordlist=/usr/share/wordlists/rockyou.txt hash_dbancal.txt
 Le mot de passe faible du compte de service est retrouvé en quelques secondes :
 `dbancal : start`.
 
-
+![Cassage du hash TGS avec John the Ripper](image-2.png)
 
 ### 3.3 Réutilisation des identifiants compromis
 
 ```bash
-crackmapexec smb 192.168.x.x -u 'dbancal' -p 'start'
+crackmapexec smb 192.168.56.10 -u 'dbancal' -p 'start'
 ```
 
 > **Pourquoi c'est critique :** un compte de service avec un mot de passe faible permet, via le
@@ -74,7 +76,6 @@ crackmapexec smb 192.168.x.x -u 'dbancal' -p 'start'
 > d'échec d'authentification.
 
 ---
-
 
 ## 4. Détection (côté défensif)
 
@@ -86,14 +87,14 @@ L'investigation fait ressortir la demande malveillante :
 | Champ | Valeur | Interprétation |
 |-------|--------|----------------|
 | `Nom_du_service` | `dbancal` | Compte à SPN ciblé (la victime) |
-| `Adresse_du_client` | `::ffff:192.168.x.x` | IP de l'attaquant (Kali) |
+| `Adresse_du_client` | `::ffff:192.168.56.40` | IP de l'attaquant (Kali) |
 | `Type_de_chiffrement_du_ticket` | `0x17` | **RC4 — marqueur du Kerberoasting** |
+
+![Détection de l'événement 4769 avec chiffrement RC4 (0x17) dans Splunk](kerberoasting.png)
 
 Le point d'analyse central : une demande 4769 en **RC4 (0x17)** pour un compte à SPN est
 suspecte par nature. Les demandes légitimes modernes utilisent l'AES (`0x12`). L'attaquant force
 le RC4 parce qu'il se casse plus facilement hors-ligne.
-
-
 
 ### 4.2 Règle de détection (SPL)
 
@@ -115,8 +116,6 @@ La recherche est enregistrée comme **alerte planifiée** (exécution horaire, d
 détection n'est plus manuelle : elle surveille en continu.
 
 ---
-
-
 
 ## 5. Règle Sigma (Detection-as-Code)
 
@@ -143,6 +142,8 @@ tags:
     - attack.credential_access
     - attack.t1558.003
 ```
+
+![Règle de détection Kerberoasting](regle-sigma.png)
 
 ---
 
