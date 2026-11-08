@@ -165,4 +165,3 @@ tags:
 - Audit et **amélioration d'une config Sysmon**.
 - Extraction d'**IOC** et écriture d'une règle **Sigma**.
 - Compréhension des **angles morts** d'un SIEM (sources non collectées, protection absente).
-
