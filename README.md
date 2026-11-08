@@ -32,14 +32,9 @@ journaux Security / System / Sysmon vers un index dédié.
 |---|--------|------------------|------------------|
 | 01 | [Détection de Kerberoasting](./01-kerberoasting-detection/) | T1558.003 | Détection AD, SPL, tuning, Sigma |
 | 03 | [Threat Hunting](./03-threat-hunting/) | T1087, T1110, T1053 | Chasse par hypothèse, analyse de fréquence, baseline |
+| 04 | [Détection sur poste client (Endpoint)](./04-endpoint-detection/) | T1059, T1033, T1547 | Sysmon, chaîne parent-enfant, EDR |
+| 05 | [Détection de Ransomware](./05-ransomware-detection/) | T1486 | Détection comportementale, config Sysmon, Sigma |
 | ⭐ | [Enrichissement d'IOC & Réponse SOAR](https://github.com/Waheed-Nasiri/ioc-enrichment-soar) *(repo dédié)* | — | Python, API REST, Threat Intel, orchestration Shuffle |
-
-**À venir :**
-
-| # | Projet | Techniques MITRE |
-|---|--------|------------------|
-| 04 | Détection sur poste client (endpoint) | T1059, T1033, T1547 |
-| 05 | Détection de Ransomware (comportementale) | T1486 |
 
 ---
 
@@ -60,6 +55,7 @@ journaux Security / System / Sysmon vers un index dédié.
 - Maîtrise du langage de requête **SPL** et du format **Sigma**
 - Conception de **use cases SOC** de bout en bout
 - **Threat hunting** et transformation des résultats en détections
+- Détection **endpoint** (Sysmon, chaîne parent-enfant) et **comportementale** (ransomware)
 - Orchestration **SOAR** : playbooks, enrichissement, réponse automatisée
 - **Scripting Python** et consommation d'API REST (Threat Intelligence)
 - Mapping **MITRE ATT&CK**
